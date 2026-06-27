@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mise — Daily Cooking Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDEFE2;
+    --card:#FBFBF4;
+    --ink:#272719;
+    --ink-soft:#5c5c47;
+    --mustard:#C28A2E;
+    --mustard-soft:#EBD9AE;
+    --plum:#6B2C39;
+    --line:#CACDB2;
+    --good:#3F6B4A;
+    --good-bg:#DEE8DE;
+    --bad:#A23B3B;
+    --bad-bg:#F1DEDE;
+    --radius:3px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:'Fraunces',serif;margin:0;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  a{color:var(--plum);}
+  button{font-family:inherit;cursor:pointer;}
+  :focus-visible{outline:2px solid var(--plum);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} }
+
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 20px 80px;}
+
+  .hero{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:6px;flex-wrap:wrap;border-bottom:2px solid var(--ink);padding-bottom:14px;}
+  .hero h1{font-size:34px;font-weight:600;letter-spacing:-0.01em;}
+  .hero .tag{font-size:13px;color:var(--ink-soft);font-style:italic;font-family:'Fraunces',serif;}
+  .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mustard);font-weight:600;}
+
+  .grid{display:grid;grid-template-columns:340px 1fr;gap:26px;margin-top:28px;align-items:start;}
+  @media (max-width:880px){ .grid{grid-template-columns:1fr;} }
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;}
+  .panel + .panel{margin-top:18px;}
+  .panel h2{font-size:16px;font-weight:600;margin-bottom:14px;}
+
+  label{display:block;font-size:12px;color:var(--ink-soft);margin:14px 0 5px;text-transform:uppercase;letter-spacing:.04em;}
+  label:first-of-type{margin-top:0;}
+  input[type=number], input[type=text], select, textarea{
+    width:100%;padding:9px 10px;border:1px solid var(--line);background:#fff;border-radius:var(--radius);
+    font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--ink);
+  }
+  textarea{font-family:'Inter',sans-serif;resize:vertical;min-height:54px;}
+  .row2{display:grid;grid-template-columns:84px 1fr;gap:8px;}
+  .row2 select{font-family:'IBM Plex Mono',monospace;}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--ink);background:var(--ink);color:var(--paper);
+    padding:11px 16px;border-radius:var(--radius);font-size:14px;font-weight:500;width:100%;margin-top:18px;}
+  .btn:hover{background:var(--plum);border-color:var(--plum);}
+  .btn:disabled{opacity:.55;cursor:default;}
+  .btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--line);width:auto;margin-top:0;padding:7px 12px;font-size:12px;}
+  .btn-ghost:hover{border-color:var(--plum);color:var(--plum);background:transparent;}
+  .btn-danger{color:var(--bad);}
+
+  .saved-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:13px;}
+  .saved-item:last-child{border-bottom:none;}
+  .saved-item .meta{cursor:pointer;flex:1;}
+  .saved-item .meta:hover .lbl{color:var(--plum);}
+  .saved-item .lbl{font-weight:500;}
+  .saved-item .sub{color:var(--ink-soft);font-size:11px;}
+  .pill{font-size:10px;padding:2px 6px;border-radius:20px;font-weight:600;letter-spacing:.02em;}
+  .pill.ok{background:var(--good-bg);color:var(--good);}
+  .pill.bad{background:var(--bad-bg);color:var(--bad);}
+
+  .empty{padding:60px 20px;text-align:center;color:var(--ink-soft);border:1px dashed var(--line);border-radius:var(--radius);}
+  .empty h3{font-size:18px;margin-bottom:8px;color:var(--ink);}
+  .empty p{font-size:13px;max-width:380px;margin:0 auto;}
+
+  .loading{padding:60px 20px;text-align:center;}
+  .spinner{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--plum);border-radius:50%;
+    animation:spin 0.8s linear infinite;margin:0 auto 16px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading p{color:var(--ink-soft);font-size:13px;}
+
+  .errbox{padding:28px 20px;border:1px solid var(--bad);background:var(--bad-bg);border-radius:var(--radius);}
+  .errbox h3{color:var(--bad);font-size:15px;margin-bottom:6px;font-family:'Inter',sans-serif;font-weight:600;}
+  .errbox p{font-size:13px;color:var(--ink);margin:0 0 12px;}
+
+  .meals{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  @media (max-width:680px){.meals{grid-template-columns:1fr;}}
+  .meal-card{border:1px solid var(--line);border-radius:var(--radius);background:#fff;padding:14px;}
+  .meal-card .eyebrow{display:block;margin-bottom:6px;}
+  .meal-card h3{font-size:17px;font-weight:600;margin-bottom:6px;}
+  .meal-card p{font-size:13px;color:var(--ink-soft);margin:0 0 10px;min-height:36px;}
+  .meal-card .cost{font-size:13px;font-weight:600;color:var(--plum);}
+
+  .todo-list{list-style:none;margin:0;padding:0;}
+  .todo-list li{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;}
+  .todo-list li:last-child{border-bottom:none;}
+  .todo-list input[type=checkbox]{width:16px;height:16px;margin-top:2px;accent-color:var(--plum);}
+  .todo-list .done{text-decoration:line-through;color:var(--ink-soft);}
+  .todo-list .tag{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--mustard);font-weight:600;margin-left:auto;white-space:nowrap;}
+
+  /* receipt — signature element */
+  .receipt-wrap{position:relative;padding-top:14px;}
+  .receipt-zig{height:12px;background-image:
+      linear-gradient(135deg, transparent 70%, var(--card) 70%),
+      linear-gradient(45deg, transparent 70%, var(--card) 70%);
+    background-size:14px 14px;background-position:0 0,7px 0;background-repeat:repeat-x;background-color:var(--paper);}
+  .receipt{background:#fff;border:1px solid var(--line);border-top:none;padding:16px 18px 10px;font-family:'IBM Plex Mono',monospace;font-size:13px;}
+  .receipt-head{text-align:center;border-bottom:1px dashed var(--ink);padding-bottom:10px;margin-bottom:8px;}
+  .receipt-head .store{font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:13px;}
+  .receipt-head .date{color:var(--ink-soft);font-size:11px;margin-top:2px;}
+  .rline{display:flex;align-items:baseline;gap:6px;padding:5px 0;}
+  .rline input[type=checkbox]{accent-color:var(--plum);margin-top:2px;}
+  .rline .name{white-space:nowrap;}
+  .rline .name.got{text-decoration:line-through;color:var(--ink-soft);}
+  .rline .qty{color:var(--ink-soft);font-size:11px;white-space:nowrap;}
+  .rline .fill{flex:1;border-bottom:1px dotted var(--ink-soft);min-width:8px;height:0;align-self:flex-end;margin-bottom:5px;}
+  .rline .price{white-space:nowrap;}
+  .rtotal{display:flex;justify-content:space-between;border-top:2px solid var(--ink);margin-top:8px;padding-top:8px;font-weight:600;font-size:14px;}
+  .rfoot{text-align:center;color:var(--ink-soft);font-size:10px;margin:10px 0 4px;letter-spacing:.04em;}
+
+  .subs{display:flex;flex-direction:column;gap:8px;}
+  .sub-row{display:flex;align-items:center;gap:10px;font-size:13px;padding:9px 10px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);flex-wrap:wrap;}
+  .sub-row .swap{font-family:'IBM Plex Mono',monospace;font-size:12px;display:flex;align-items:center;gap:6px;}
+  .sub-row .orig{color:var(--bad);text-decoration:line-through;}
+  .sub-row .arrow{color:var(--ink-soft);}
+  .sub-row .new{color:var(--good);font-weight:600;}
+  .sub-row .why{color:var(--ink-soft);font-size:12px;flex:1;min-width:140px;}
+
+  .gauge-track{height:14px;border:1px solid var(--ink);border-radius:20px;background:#fff;overflow:hidden;position:relative;}
+  .gauge-fill{height:100%;border-radius:20px;}
+  .gauge-labels{display:flex;justify-content:space-between;font-size:12px;margin-top:8px;}
+  .budget-note{font-size:13px;margin-top:12px;padding:10px 12px;border-radius:var(--radius);border:1px solid var(--line);background:#fff;}
+  .per-meal{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
+  .per-meal div{text-align:center;border:1px solid var(--line);border-radius:var(--radius);padding:8px;background:#fff;}
+  .per-meal .lbl{font-size:10px;text-transform:uppercase;color:var(--ink-soft);letter-spacing:.04em;}
+  .per-meal .amt{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14px;margin-top:2px;}
+
+  .section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .footer-note{font-size:12px;color:var(--ink-soft);margin-top:22px;text-align:center;font-style:italic;font-family:'Fraunces',serif;}
+  .top-actions{display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div>
+      <span class="eyebrow">mise en place, for your budget</span>
+      <h1>Mise</h1>
+    </div>
+    <div class="tag">plan the day's plate before you spend a rupee on it</div>
+  </div>
+
+  <div class="grid" id="app"></div>
+
+  <div class="footer-note">Costs and quantities are AI-estimated planning guides, not a real receipt — prices vary by store and season.</div>
+</div>
+
+<script>
+const STORE_KEY_PREFIX = 'plans:';
+const INDEX_KEY = 'plans-index';
+
+let state = {
+  view: 'idle',          // idle | loading | result | error
+  errorMsg: '',
+  currentPlan: null,     // {id, createdAt, input, output, todoChecks:[], groceryChecks:[]}
+  savedIndex: [],        // [{id, label, currency, budget, totalCost, feasible}]
+  pendingDelete: null,
+  storageBroken: false
+};
+
+function esc(s){ return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function money(n, cur){ const v = Number(n); return cur + (isFinite(v) ? v.toFixed(0) : '0'); }
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+async function loadIndex(){
+  try{
+    const res = await window.storage.get(INDEX_KEY);
+    state.savedIndex = res ? JSON.parse(res.value) : [];
+  }catch(e){ state.savedIndex = []; }
+}
+async function saveIndex(){
+  try{ await window.storage.set(INDEX_KEY, JSON.stringify(state.savedIndex)); }
+  catch(e){ state.storageBroken = true; }
+}
+async function savePlanRecord(rec){
+  try{ await window.storage.set(STORE_KEY_PREFIX + rec.id, JSON.stringify(rec)); }
+  catch(e){ state.storageBroken = true; }
+}
+
+function buildSystemPrompt(){
+  return `You are a frugal, practical home-cooking planner for an Indian household context but adaptable to any cuisine asked. Always respond with ONLY raw minified JSON, no markdown fences, no commentary, matching EXACTLY this schema:
+{"meals":{"breakfast":{"name":"","description":"","cost":0},"lunch":{"name":"","description":"","cost":0},"dinner":{"name":"","description":"","cost":0}},"todo":[{"task":"","meal":"breakfast|lunch|dinner|prep"}],"grocery_list":[{"item":"","qty":"","price":0}],"substitutions":[{"original":"","substitute":"","reason":""}],"budget":{"total_cost":0,"feasible":true,"per_meal_budget":{"breakfast":0,"lunch":0,"dinner":0},"note":""}}
+Rules: descriptions max 14 words. todo max 6 items, each a short imperative kitchen task (e.g. "Soak rice for 20 min"). grocery_list max 9 items covering everything needed across all three meals for the stated number of people, with realistic local market prices as plain numbers (no currency symbol) in the same numeric unit as the budget given. substitutions max 3, only for ingredients likely to be expensive, unavailable, or restricted, with one-line reasons. budget.total_cost must equal the sum of grocery_list prices. budget.feasible is true only if total_cost <= budget given. per_meal_budget must split the TOTAL BUDGET (not total_cost) sensibly across the three meals as guidance for how much should be spent on each. note is max 22 words: if over budget, name which meal/items to shrink or swap and roughly how much to cut; if under, say so briefly.`;
+}
+
+async function callClaude(input){
+  const userPrompt = `Budget for the day: ${input.budget} ${input.currency}
+People eating: ${input.people}
+Diet: ${input.diet}
+Cuisine preference: ${input.cuisine}
+Allergies/restrictions: ${input.restrictions || 'none'}
+Pantry items already on hand (skip buying these): ${input.pantry || 'none'}
+Build one day's breakfast, lunch, dinner plan, the grocery list to buy, substitutions, and budget feasibility per the schema.`;
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1000,
+      system: buildSystemPrompt(),
+      messages: [{ role: "user", content: userPrompt }]
+    })
+  });
+  if(!response.ok){ throw new Error('AI service returned ' + response.status); }
+  const data = await response.json();
+  const text = (data.content || []).map(b => b.text || '').join('');
+  const clean = text.replace(/```json|```/g, '').trim();
+  let parsed;
+  try{ parsed = JSON.parse(clean); }
+  catch(e){ throw new Error('Could not read the plan back from the AI response.'); }
+  return parsed;
+}
+
+async function handleGenerate(formEl){
+  const budget = parseFloat(formEl.budget.value);
+  if(!budget || budget <= 0){
+    state.view = 'error';
+    state.errorMsg = 'Enter a budget greater than zero before generating a plan.';
+    render(); return;
+  }
+  const input = {
+    budget, currency: formEl.currency.value, people: formEl.people.value || '1',
+    diet: formEl.diet.value, cuisine: formEl.cuisine.value,
+    restrictions: formEl.restrictions.value.trim(), pantry: formEl.pantry.value.trim()
+  };
+  state.view = 'loading';
+  render();
+  try{
+    const output = await callClaude(input);
+    const rec = {
+      id: uid(), createdAt: new Date().toISOString(), input, output,
+      todoChecks: new Array((output.todo||[]).length).fill(false),
+      groceryChecks: new Array((output.grocery_list||[]).length).fill(false)
+    };
+    state.currentPlan = rec;
+    state.savedIndex.unshift({
+      id: rec.id, label: dateLabel(rec.createdAt),
+      currency: input.currency, budget: input.budget,
+      totalCost: output.budget ? output.budget.total_cost : null,
+      feasible: output.budget ? output.budget.feasible : null
+    });
+    state.savedIndex = state.savedIndex.slice(0, 20);
+    await savePlanRecord(rec);
+    await saveIndex();
+    state.view = 'result';
+  }catch(e){
+    state.view = 'error';
+    state.errorMsg = e.message || 'Something went wrong while building the plan.';
+  }
+  render();
+}
+
+function dateLabel(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined,{month:'short',day:'numeric'}) + ' · ' + d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+}
+
+async function openSavedPlan(id){
+  try{
+    const res = await window.storage.get(STORE_KEY_PREFIX + id);
+    if(res){ state.currentPlan = JSON.parse(res.value); state.view = 'result'; }
+  }catch(e){
+    state.view = 'error'; state.errorMsg = 'Could not load that saved plan.';
+  }
+  render();
+}
+
+async function toggleTodo(idx){
+  if(!state.currentPlan) return;
+  state.currentPlan.todoChecks[idx] = !state.currentPlan.todoChecks[idx];
+  await savePlanRecord(state.currentPlan);
+  render();
+}
+async function toggleGrocery(idx){
+  if(!state.currentPlan) return;
+  state.currentPlan.groceryChecks[idx] = !state.currentPlan.groceryChecks[idx];
+  await savePlanRecord(state.currentPlan);
+  render();
+}
+
+async function deletePlan(id){
+  if(state.pendingDelete !== id){ state.pendingDelete = id; render(); return; }
+  try{ await window.storage.delete(STORE_KEY_PREFIX + id); }catch(e){}
+  state.savedIndex = state.savedIndex.filter(p => p.id !== id);
+  await saveIndex();
+  if(state.currentPlan && state.currentPlan.id === id){ state.currentPlan = null; state.view = 'idle'; }
+  state.pendingDelete = null;
+  render();
+}
+
+function newPlanView(){
+  state.currentPlan = null;
+  state.view = 'idle';
+  render();
+}
+
+function renderForm(){
+  return `
+  <div class="panel">
+    <h2>Today's order ticket</h2>
+    <form id="planForm">
+      <label for="budget">Budget for the day</label>
+      <div class="row2">
+        <select id="currency" name="currency">
+          <option value="₹">₹ INR</option>
+          <option value="$">$ USD</option>
+          <option value="€">€ EUR</option>
+          <option value="£">£ GBP</option>
+        </select>
+        <input type="number" id="budget" name="budget" min="0" step="1" placeholder="e.g. 500" required />
+      </div>
+
+      <label for="people">People eating</label>
+      <input type="number" id="people" name="people" min="1" step="1" value="2" />
+
+      <label for="diet">Diet</label>
+      <select id="diet" name="diet">
+        <option value="vegetarian">Vegetarian</option>
+        <option value="non-vegetarian">Non-vegetarian</option>
+        <option value="eggetarian">Eggetarian</option>
+        <option value="vegan">Vegan</option>
+      </select>
+
+      <label for="cuisine">Cuisine</label>
+      <select id="cuisine" name="cuisine">
+        <option value="any">Any / mixed</option>
+        <option value="indian">Indian</option>
+        <option value="continental">Continental</option>
+        <option value="asian">Asian</option>
+        <option value="mediterranean">Mediterranean</option>
+      </select>
+
+      <label for="restrictions">Allergies / restrictions</label>
+      <input type="text" id="restrictions" name="restrictions" placeholder="e.g. no peanuts, low oil" />
+
+      <label for="pantry">Already in your pantry</label>
+      <textarea id="pantry" name="pantry" placeholder="e.g. rice, onions, eggs"></textarea>
+
+      <button type="submit" class="btn" data-action="generate">Build today's plan</button>
+    </form>
+  </div>
+  <div class="panel">
+    <h2>Saved days</h2>
+    ${state.savedIndex.length === 0 ? `<p style="font-size:13px;color:var(--ink-soft);margin:0;">Nothing saved yet — your plans land here.</p>` :
+      `<div>${state.savedIndex.map(p => `
+        <div class="saved-item">
+          <div class="meta" data-action="open" data-id="${p.id}">
+            <div class="lbl">${esc(p.label)}</div>
+            <div class="sub">${esc(p.currency)}${p.totalCost != null ? Number(p.totalCost).toFixed(0) : '—'} of ${esc(p.currency)}${p.budget}</div>
+          </div>
+          ${p.feasible === false ? '<span class="pill bad">over</span>' : (p.feasible === true ? '<span class="pill ok">ok</span>' : '')}
+          <button class="btn-ghost btn-danger" data-action="delete" data-id="${p.id}">${state.pendingDelete === p.id ? 'sure?' : 'remove'}</button>
+        </div>
+      `).join('')}</div>
+      <button class="btn-ghost" style="width:100%;margin-top:10px;" data-action="reset-all">Clear all saved data</button>`
+    }
+  </div>`;
+}
+
+function renderOutput(){
+  if(state.view === 'idle'){
+    return `<div class="empty">
+      <h3>No plan on the counter yet</h3>
+      <p>Fill in today's budget and a few preferences on the left, then build the plan — meals, grocery list, swaps, and the budget math will show up here.</p>
+    </div>`;
+  }
+  if(state.view === 'loading'){
+    return `<div class="loading"><div class="spinner"></div><p>Working out today's meals and prices…</p></div>`;
+  }
+  if(state.view === 'error'){
+    return `<div class="errbox">
+      <h3>The plan didn't come together</h3>
+      <p>${esc(state.errorMsg)}</p>
+      <button class="btn-ghost" data-action="dismiss-error">Back to the form</button>
+    </div>`;
+  }
+
+  const plan = state.currentPlan;
+  const o = plan.output;
+  const cur = plan.input.currency;
+  const meals = o.meals || {};
+  const todo = o.todo || [];
+  const groceries = o.grocery_list || [];
+  const subs = o.substitutions || [];
+  const b = o.budget || {};
+  const pct = b.total_cost != null ? Math.min(100, Math.round((b.total_cost / plan.input.budget) * 100)) : 0;
+  const over = b.feasible === false;
+
+  return `
+  <div class="top-actions">
+    <button class="btn-ghost" data-action="new-plan">+ New day</button>
+  </div>
+
+  <div class="panel">
+    <div class="section-title"><h2>Meals for the day</h2></div>
+    <div class="meals">
+      ${['breakfast','lunch','dinner'].map(m => meals[m] ? `
+        <div class="meal-card">
+          <span class="eyebrow">${m}</span>
+          <h3>${esc(meals[m].name)}</h3>
+          <p>${esc(meals[m].description)}</p>
+          <div class="cost">${money(meals[m].cost, cur)}</div>
+        </div>` : '').join('')}
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="section-title"><h2>Cooking to-do list</h2></div>
+    <ul class="todo-list">
+      ${todo.map((t,i) => `
+        <li>
+          <input type="checkbox" id="todo-${i}" data-action="toggle-todo" data-idx="${i}" ${plan.todoChecks[i] ? 'checked' : ''}/>
+          <label for="todo-${i}" class="${plan.todoChecks[i] ? 'done' : ''}" style="flex:1;cursor:pointer;">${esc(t.task)}</label>
+          <span class="tag">${esc(t.meal)}</span>
+        </li>`).join('')}
+    </ul>
+  </div>
+
+  <div class="panel">
+    <div class="section-title"><h2>Grocery list</h2></div>
+    <div class="receipt-wrap">
+      <div class="receipt-zig"></div>
+      <div class="receipt">
+        <div class="receipt-head">
+          <div class="store">MISE · TODAY'S SHOP</div>
+          <div class="date">${esc(dateLabel(plan.createdAt))} · for ${esc(plan.input.people)} people</div>
+        </div>
+        ${groceries.map((g,i) => `
+          <div class="rline">
+            <input type="checkbox" data-action="toggle-grocery" data-idx="${i}" ${plan.groceryChecks[i] ? 'checked' : ''}/>
+            <span class="name ${plan.groceryChecks[i] ? 'got' : ''}">${esc(g.item)}</span>
+            <span class="qty">${esc(g.qty)}</span>
+            <span class="fill"></span>
+            <span class="price">${money(g.price, cur)}</span>
+          </div>`).join('')}
+        <div class="rtotal"><span>TOTAL</span><span>${money(b.total_cost, cur)}</span></div>
+        <div class="rfoot">— estimated, not a real receipt —</div>
+      </div>
+    </div>
+  </div>
+
+  ${subs.length ? `
+  <div class="panel">
+    <div class="section-title"><h2>Substitutions</h2></div>
+    <div class="subs">
+      ${subs.map(s => `
+        <div class="sub-row">
+          <span class="swap"><span class="orig">${esc(s.original)}</span><span class="arrow">→</span><span class="new">${esc(s.substitute)}</span></span>
+          <span class="why">${esc(s.reason)}</span>
+        </div>`).join('')}
+    </div>
+  </div>` : ''}
+
+  <div class="panel">
+    <div class="section-title"><h2>Budget feasibility</h2></div>
+    <div class="gauge-track">
+      <div class="gauge-fill" style="width:${pct}%;background:${over ? 'var(--bad)' : 'var(--good)'};"></div>
+    </div>
+    <div class="gauge-labels">
+      <span class="mono">${money(b.total_cost, cur)} spent</span>
+      <span class="mono">${money(plan.input.budget, cur)} budget</span>
+    </div>
+    <div class="per-meal">
+      ${['breakfast','lunch','dinner'].map(m => `
+        <div><div class="lbl">${m}</div><div class="amt">${b.per_meal_budget ? money(b.per_meal_budget[m], cur) : '—'}</div></div>`).join('')}
+    </div>
+    <div class="budget-note" style="border-color:${over ? 'var(--bad)' : 'var(--good)'};">
+      <strong style="color:${over ? 'var(--bad)' : 'var(--good)'};">${over ? 'Over budget. ' : 'Within budget. '}</strong>${esc(b.note)}
+    </div>
+  </div>`;
+}
+
+function render(){
+  document.getElementById('app').innerHTML = renderForm() + '<div>' + renderOutput() + '</div>';
+}
+
+document.addEventListener('submit', (e) => {
+  if(e.target && e.target.id === 'planForm'){
+    e.preventDefault();
+    handleGenerate(e.target);
+  }
+});
+
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if(!el) return;
+  const action = el.dataset.action;
+  if(action === 'open') openSavedPlan(el.dataset.id);
+  else if(action === 'delete') deletePlan(el.dataset.id);
+  else if(action === 'reset-all') resetAll();
+  else if(action === 'new-plan') newPlanView();
+  else if(action === 'dismiss-error') { state.view = 'idle'; render(); }
+});
+document.addEventListener('change', (e) => {
+  const el = e.target;
+  if(el.dataset && el.dataset.action === 'toggle-todo') toggleTodo(Number(el.dataset.idx));
+  else if(el.dataset && el.dataset.action === 'toggle-grocery') toggleGrocery(Number(el.dataset.idx));
+});
+
+async function resetAll(){
+  for(const p of state.savedIndex){
+    try{ await window.storage.delete(STORE_KEY_PREFIX + p.id); }catch(e){}
+  }
+  state.savedIndex = [];
+  await saveIndex();
+  state.currentPlan = null;
+  state.view = 'idle';
+  render();
+}
+
+(async function init(){
+  render();
+  await loadIndex();
+  render();
+})();
+</script>
+</body>
+</html>
